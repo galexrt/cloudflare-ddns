@@ -52,11 +52,17 @@ def getIPs():
     global ipv4_enabled
     global ipv6_enabled
     global purgeUnknownRecords
+
+    headers = {'Authorization': "Bearer " + os.environ.get("SUPERVISOR_TOKEN")}
+    supervisor_response = requests.get("http://supervisor/network/info", headers=headers)
+    supervisor_json = supervisor_response.json()
+    
+    for interface in supervisor_json["data"]["interfaces"]:
+        break
+
     if ipv4_enabled:
         try:
-            a = requests.get("https://1.1.1.1/cdn-cgi/trace").text.split("\n")
-            a.pop()
-            a = dict(s.split("=") for s in a)["ip"]
+            a = interface["ipv4"]["address"][0]
         except Exception:
             global shown_ipv4_warning
             if not shown_ipv4_warning:
@@ -66,9 +72,8 @@ def getIPs():
                 deleteEntries("A")
     if ipv6_enabled:
         try:
-            aaaa = requests.get("https://[2606:4700:4700::1111]/cdn-cgi/trace").text.split("\n")
-            aaaa.pop()
-            aaaa = dict(s.split("=") for s in aaaa)["ip"]
+            aaaa = interface["ipv6"]["address"][0]
+            aaaa = aaaa.split("/", 1)[0]
         except Exception:
             global shown_ipv6_warning
             if not shown_ipv6_warning:
